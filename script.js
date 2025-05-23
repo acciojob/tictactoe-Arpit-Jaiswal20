@@ -1,70 +1,80 @@
-let currentPlayer = "X";
-let player1 = "";
-let player2 = "";
-let gameActive = true;
-let board = ["", "", "", "", "", "", "", "", ""];
+const messege = document.querySelector(".messege");
+const player1 = document.querySelector("#player-1");
+const player2 = document.querySelector("#player-2");
+const playerInput = document.querySelector(".player-input");
+const startbtn = document.querySelector("#start-btn");
+const gameboard = document.querySelector(".game-board");
+const gameboardState = Array(9).fill(null);
+const cells = document.querySelectorAll(".cell");
+let currentPlayer = "";
+let currentSymbol = "";
+let gameActive = false; // it will track game is active or not.
+let count = 0; // it will track draw status
 
-const submitBtn = document.getElementById("submit");
-const messageDiv = document.querySelector(".message");
-const gameDiv = document.getElementById("game");
-const playerInputDiv = document.getElementById("player-input");
-const cells = document.getElementsByClassName("cell");
+gameboard.style.visibility = "hidden";
 
-submitBtn.addEventListener("click", () => {
-  player1 = document.getElementById("player-1").value.trim();
-  player2 = document.getElementById("player-2").value.trim();
+// game board will appear after click
+startbtn.addEventListener("click", () => {
+    if(player1.value.trim() == "" || player2.value.trim() == ""){
+        alert("Enter Player details");
+        return;
+    }
 
-  if (player1 && player2) {
-    playerInputDiv.style.display = "none";
-    gameDiv.style.display = "block";
-    updateMessage();
-  }
+    playerInput.style.visibility = "hidden";
+    gameboard.style.visibility = "";
+
+    currentPlayer = player1;
+    currentSymbol = "X";
+
+    gameActive = true;
+
+    messege.textContent = `${currentPlayer.value} you're up!`
 });
 
-Array.from(cells).forEach((cell, index) => {
-  cell.addEventListener("click", () => handleCellClick(index));
+// who will winner and winning patterns
+function checkwinner () {
+    const winningPatterns = [
+        [0,1,2],[0,3,6],[0,4,8],[1,4,7],[2,4,6],[2,5,8],[3,4,5],[6,7,8]
+    ];
+
+    for(patterns of winningPatterns){
+        const [a,b,c] = patterns;
+
+        if(gameboardState[a] && gameboardState[a] === gameboardState[b] && gameboardState[a] === gameboardState[c]){
+            return true;
+        }
+    }
+    return false;
+}
+
+cells.forEach(cell => {
+    cell.addEventListener("click" ,(event) => {
+        count++;
+        console.log(cell.id);
+        const cellIndex = parseInt(cell.id)-1;
+
+        if(gameboardState[cellIndex] || !gameActive){
+            return;
+        }
+
+        gameboardState[cellIndex] = currentSymbol;
+        cell.textContent = currentSymbol;
+
+        if(checkwinner()){
+            messege.textContent =`${currentPlayer.value}, Congratulations you won!!!`
+            gameActive = false;
+            return;
+        }
+        
+        currentPlayer = currentPlayer === player1 ? player2 : player1;
+        currentSymbol = currentSymbol ==="X" ?"O" :"X";
+
+        if(count === 9 && !checkwinner()){
+            messege.textContent = "Match is draw!";
+            gameActive = false;
+            return;
+        }
+
+        messege.textContent = `${currentPlayer.value} you're up!`;
+    });
 });
-
-function handleCellClick(index) {
-  if (!gameActive || board[index] !== "") return;
-
-  board[index] = currentPlayer;
-  document.getElementById(index + 1).textContent = currentPlayer;
-
-  if (checkWinner()) {
-    gameActive = false;
-    messageDiv.textContent = `${getCurrentPlayerName()}, congratulations you won!`;
-    return;
-  }
-
-  if (board.every(cell => cell !== "")) {
-    gameActive = false;
-    messageDiv.textContent = "It's a draw!";
-    return;
-  }
-
-  currentPlayer = currentPlayer === "X" ? "O" : "X";
-  updateMessage();
-}
-
-function updateMessage() {
-  messageDiv.textContent = `${getCurrentPlayerName()}, you're up`;
-}
-
-function getCurrentPlayerName() {
-  return currentPlayer === "X" ? player1 : player2;
-}
-
-function checkWinner() {
-  const winPatterns = [
-    [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
-    [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
-    [0, 4, 8], [2, 4, 6]             // diagonals
-  ];
-
-  return winPatterns.some(pattern => 
-    board[pattern[0]] === currentPlayer &&
-    board[pattern[1]] === currentPlayer &&
-    board[pattern[2]] === currentPlayer
-  );
-}
